@@ -16,7 +16,7 @@ from bson.son import SON
 from pymongo import Connection, ASCENDING, DESCENDING
 from pymongo.errors import ConnectionFailure, ConfigurationError, OperationFailure, AutoReconnect
 from bson import json_util
-
+import logging
 import re
 try:
     import json
@@ -24,6 +24,9 @@ except ImportError:
     import simplejson as json
 
 class MongoHandler:
+    #TODO Migrate to python 3.4
+    #TODO Change Connection to MongoClient
+    #TODO Allow replica set connection
     mh = None
 
     _cursor_id = 0
@@ -121,7 +124,7 @@ class MongoHandler:
             out('{"ok" : 0, "errmsg" : "wasn\'t connected to the db and '+
                 'couldn\'t reconnect", "name" : "%s"}' % name)
             return
-        except (OperationFailure, error):
+        except OperationFailure as error:
             out('{"ok" : 0, "errmsg" : "%s"}' % error)
             return
 
@@ -157,9 +160,9 @@ class MongoHandler:
         if "server" in args:
             try:
                 uri = args.getvalue('server')
-            except Exception, e:
-                print uri
-                print e
+            except Exception as e:
+                logging.error(uri)
+                logging.error(str(e))
                 out('{"ok" : 0, "errmsg" : "invalid server uri given", "server" : "%s"}' % uri)
                 return
         else:
@@ -322,7 +325,7 @@ class MongoHandler:
         except AutoReconnect:
             out(json.dumps({"ok" : 0, "errmsg" : "auto reconnecting, please try again"}))
             return
-        except OperationFailure, of:
+        except OperationFailure as of:
             out(json.dumps({"ok" : 0, "errmsg" : "%s" % of}))
             return
         except StopIteration:

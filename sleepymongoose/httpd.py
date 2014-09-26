@@ -12,31 +12,27 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from SocketServer import BaseServer
-from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
-from handlers import MongoHandler
+
 
 try:
     from OpenSSL import SSL
 except ImportError:
     pass
 
-import os.path, socket
-import urlparse
-import cgi
-import getopt
-import sys
-
 try:
     import json
 except ImportError:
     import simplejson as json
 
-# support python 2.5 (parse_qs was moved from cgi to urlparse in python 2.6)
-try:
-    urlparse.parse_qs
-except AttributeError:
-    urlparse.parse_qs = cgi.parse_qs
+import os.path, socket
+import cgi
+import getopt
+import sys
+import logging
+from urllib.parse import urlparse
+from socketserver import BaseServer
+from http.server import BaseHTTPRequestHandler, HTTPServer
+from sleepymongoose.handlers import MongoHandler
 
 
 
@@ -218,32 +214,32 @@ class MongoHTTPRequest(BaseHTTPRequestHandler):
 
     @staticmethod
     def serve_forever(port):
-        print "\n================================="
-        print "|      MongoDB REST Server      |"
-        print "=================================\n"
+        logging.info("\n=================================")
+        logging.info("|      MongoDB REST Server      |")
+        logging.info("=================================\n")
 
         if MongoServer.pem == None:
             try:
                 server = HTTPServer(('', port), MongoHTTPRequest)
-            except socket.error, (value, message):
-                if value == 98:
-                    print "could not bind to localhost:%d... is sleepy.mongoose already running?\n" % port
+            except socket.error as e:
+                if e.errno == 98:
+                    logging.info("could not bind to localhost:%d... is sleepy.mongoose already running?\n" % port)
                 else:
-                    print message
+                    logging.info(e.strerror)
                 return
         else:
-            print "--------Secure Connection--------\n"
+            print("--------Secure Connection--------\n")
             server = MongoServer(('', port), MongoHTTPSRequest)
 
         MongoHandler.mh = MongoHandler(MongoHTTPRequest.mongos)
         
-        print "listening for connections on http://localhost:27080\n"
+        logging.info("listening for connections on http://localhost:27080\n")
         try:
             server.serve_forever()
         except KeyboardInterrupt:
-            print "\nShutting down the server..."
+            logging.info("\nShutting down the server...")
             server.socket.close()
-            print "\nGood bye!\n"
+            logging.info("\nGood bye!\n")
 
 
 class MongoHTTPSRequest(MongoHTTPRequest):
@@ -254,11 +250,11 @@ class MongoHTTPSRequest(MongoHTTPRequest):
 
 
 def usage():
-    print "python httpd.py [-x] [-d docroot/dir] [-s certificate.pem] [-m list,of,mongods]"
-    print "\t-x|--xorigin\tAllow cross-origin http requests"
-    print "\t-d|--docroot\tlocation from which to load files"
-    print "\t-s|--secure\tlocation of .pem file if ssl is desired"
-    print "\t-m|--mongos\tcomma-separated list of mongo servers to connect to"
+    logging.info("python httpd.py [-x] [-d docroot/dir] [-s certificate.pem] [-m list,of,mongods]")
+    logging.info("\t-x|--xorigin\tAllow cross-origin http requests")
+    logging.info("\t-d|--docroot\tlocation from which to load files")
+    logging.info("\t-s|--secure\tlocation of .pem file if ssl is desired")
+    logging.info("\t-m|--mongos\tcomma-separated list of mongo servers to connect to")
 
 
 def main():
@@ -279,7 +275,7 @@ def main():
                 MongoHTTPRequest.response_headers.append(("Access-Control-Allow-Origin","*"))
 
     except getopt.GetoptError:
-        print "error parsing cmd line args."
+        logging.info("error parsing cmd line args.")
         usage()
         sys.exit(2)
 

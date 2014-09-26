@@ -11,12 +11,12 @@ except IOError:
 
 setup(
     name='sleepy.mongoose',
-    version='0.1',
-    url='https://github.com/kchodorow/sleepy.mongoose',
+    version='0.2',
+    url='https://github.com/edosoft/sleepy.mongoose',
     description='A REST interface for MongoDB',
     long_description=long_description,
-    author='Kristina Chodorow',
-    author_email='kristina@10gen.com',
+    author='Kristina Chodorow, Juan A. Vera',
+    author_email='kristina@10gen.com, juan.vera@edosoft.es',
     license='BSD',
     keywords='mongo http rest json proxy'.split(),
     platforms='any',
